@@ -3,7 +3,6 @@ import types
 import yaql
 import yaql.legacy
 import yaml
-from flask import escape
 
 from yaql.language import exceptions
 from yaml.parser import ParserError
@@ -47,7 +46,7 @@ def evaluate(expression, data):
             raise Exception("Invalid Expression: {}".format('\n'.join(res['errors'])))
         else:
             res = evaluate(expression, loaded_yaml)
-        return {'evaluation': escape(res), 'payload': loaded_yaml}
+        return {'evaluation': res, 'payload': loaded_yaml}
     except yaql.language.exceptions.YaqlParsingException as pe:
         raise YaqlException("Invalid expression: " + str(pe))
     except Exception as e:

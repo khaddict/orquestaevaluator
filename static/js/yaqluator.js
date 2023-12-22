@@ -4,9 +4,6 @@ var $yaqlInput = $("#yaqlInput");
 var $resultArea = $("#result");
 var $yaqlAlert = $("#yaqlAlert");
 var $yamlAlert = $("#yamlAlert");
-var $st2Host = $("#st2Host");
-var $st2Key = $("#st2Key");
-var $st2Execution = $("#st2Execution");
 
 //api
 var apiServerString = "/api";
@@ -14,11 +11,7 @@ var apiEvaluate = "/evaluate/";
 var autoComplete = apiServerString + "/autoComplete/";
 var evalReqObj = {
     "yaml": "",
-    "yaql_expression": "",
-    "st2_host": "",
-    "st2_key": "",
-    "st2_execution": "",
-    "legacy": false
+    "yaql_expression": ""
 };
 
 
@@ -47,76 +40,46 @@ function setResultArea(json) {
     $resultArea.rainbowJSON({json: JSON.stringify(json)})
 }
 
-function evaluate(obj) {
-    var url = apiServerString + apiEvaluate;
-    $.ajax({
-        url: url,
-        type: "POST",
-        crossDomain: false,
-        data: obj,
-        dataType: "json",
-        success: function (result) {
-            //alert(JSON.stringify(result));
-            if (result.statusCode > 0) {
-                setResultArea(result.value.evaluation);
-                setYaml(result.value.payload);
-            } else {
-                if (result.error) {
-                    $yaqlAlert.html(result.error);
-                    $("#yaqlAlert").css('display', 'block')
-                }
-            }
+async function evaluate(data) {
+    try {
+      var url = apiServerString + apiEvaluate;
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-        error: function (xhr, status, error) {
-            //alert(status);
-            console.error(status);
+        body: JSON.stringify(data),
+      });
+  
+      const result = await response.json();
+        if (result.statusCode > 0) {
+            setResultArea(result.value.evaluation);
+            setYaml(result.value.payload);
+        } else {
+            parseError(result);
         }
-    });
+    } catch (error) {
+        parseError(error);
+    }
+  }
 
-}
-
-function initYaqlInput() {
-
-    $yaqlInput.keydown(function (event) {
-        if (event.keyCode == 13) {
-            $("#evaluate").click();
-            return false;
-        }
-        if (event.keyCode != 8 && event.keyCode != 32 && event.keyCode != 46 && event.keyCode < 48) {
-            return;
-        }
-    });
-}
+  function parseError (result) {
+    if (result.error) {
+        $yaqlAlert.html(result.error);
+    } else {
+        $yaqlAlert.html(result);
+    }
+    $("#yaqlAlert").css('display', 'block');
+  }
 
 function output(inp) {
     document.body.appendChild(document.createElement('pre')).innerHTML = inp;
 }
 
-function syntaxHighlight(json) {
-    json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
-        var cls = 'number';
-        if (/^"/.test(match)) {
-            if (/:$/.test(match)) {
-                cls = 'key';
-            } else {
-                cls = 'string';
-            }
-        } else if (/true|false/.test(match)) {
-            cls = 'boolean';
-        } else if (/null/.test(match)) {
-            cls = 'null';
-        }
-        return '<span class="' + cls + '">' + match + '</span>';
-    });
-}
-
 $( document ).ready(function() {
     $yamlInput = $("#yamlInput");
     $yaqlInput = $("#yaqlInput");
-    $st2Host = $("#st2Host");
-    $st2Key = $("#st2Key");
-    $st2Execution = $("#st2Execution");
+
     $resultArea = $("#result");
     $yaqlAlert = $("#yaqlAlert");
     $yamlAlert = $("#yamlAlert");
@@ -131,10 +94,6 @@ $( document ).ready(function() {
         $("#yaqlAlert").css('display', 'none')
         evalReqObj.yaml = $yamlInput.val();
         evalReqObj.yaql_expression = $yaqlInput.val();
-        evalReqObj.st2_host = $st2Host.val();
-        evalReqObj.st2_key = $st2Key.val();
-        evalReqObj.st2_execution = $st2Execution.val();
-        evalReqObj.legacy = $("#legacy").prop('checked');
         evaluate(evalReqObj);
 
     });
@@ -169,12 +128,4 @@ $( document ).ready(function() {
             return;
         }
     });
-
-    $st2Execution.keydown(function (event) {
-        if ($st2Execution.val().length > 0) {
-            $yamlInput.prop('disabled', true);
-        } else {
-            $yamlInput.prop('disabled', false);
-        }
-    })
 });

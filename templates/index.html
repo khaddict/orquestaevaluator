@@ -12,14 +12,12 @@
   <title>Orquesta Evaluator</title>
 
   <!-- Custom fonts for this template-->
-  <link href="/static/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
   <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
   <link href="/static/css/jquery.rainbowJSON.css" rel="stylesheet">
 
   <!-- Custom styles for this template-->
   <link href="/static/css/sb-admin-2.css" rel="stylesheet">
-  <link rel="stylesheet" href="/static/css/ostk.css">
-  <link href="/static/css/prism.css" rel="stylesheet" />
+  <link href="/static/css/ostk.css" rel="stylesheet" >
 
 </head>
 
@@ -50,7 +48,7 @@
                 <div class="col-lg-6">
                         <div class="form-group">
                             <label for="yaqlInput">Expression</label>
-                            <textarea class="form-control" id="yaqlInput" rows="2"></textarea>
+                            <textarea class="form-control" id="yaqlInput" rows="2">{{expression}}</textarea>
                             <div class="alert alert-danger" id="yaqlAlert" role="alert" style="display: none"></div>
                         </div>
                         <div class="form-group">
@@ -59,12 +57,6 @@
                         </div>
                         <div class="form-group">
                             <div class="row">
-                                <label for="st2Host" class="col-md-4">Stackstorm Host</label>
-                                <div class="col-md-8" style="margin-bottom:10px"><input class="form-control" id="st2Host" rows="1"/></div>
-                                <label for="st2Key" class="col-md-4">Stackstorm API Key</label>
-                                <div class="col-md-8" style="margin-bottom:10px"><input type="password" class="form-control" id="st2Key" rows="1"/></div>
-                                <label for="st2Execution" class="col-md-4">Stackstorm Execution ID (fetch data results)</label>
-                                <div class="col-md-8" style="margin-bottom:10px"><input class="form-control" id="st2Execution" rows="1"/></div>
                             </div>
                         </div>
                         <div class="row">
@@ -79,7 +71,7 @@
                 <div class="col-lg-6">
                         <div class="form-group">
                             <label for="yamlInput">json/yaml</label>
-                            <textarea class="form-control" id="yamlInput" rows="20"></textarea>
+                            <textarea class="form-control" id="yamlInput" rows="20">{{json_yaml}}</textarea>
                         </div>
                 </div>
             </div>
@@ -105,25 +97,14 @@
   </div>
   <!-- End of Page Wrapper -->
 
-
-  <!-- Bootstrap core JavaScript-->
-  <script src="/static/vendor/jquery/jquery.min.js"></script>
-  <script src="/static/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-
   <!-- Core plugin JavaScript-->
-  <script src="/static/vendor/jquery-easing/jquery.easing.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
 
   <!-- Custom scripts for all pages-->
-  <script src="/static/js/sb-admin-2.js"></script>
   <script src="/static/js/jquery.rainbowJSON.js"></script>
 
   <!-- yaqulator -->
-  <script src="/static/js/js-yaml.js"></script>
   <script src="/static/js/yaqluator.js"></script>
-
-  <!-- prism -->
-  <script src="/static/js/prism.js"></script>
-
 
 </body>
 

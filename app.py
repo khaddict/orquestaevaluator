@@ -1,13 +1,16 @@
-from flask import Flask, request, jsonify, current_app, render_template
+from flask import Flask, request, jsonify, current_app, render_template, session
 
 # Custom
 from functools import wraps
 import traceback
 import sys
 from yaqluator import yaqluator
-from utils import files
 
 app = Flask(__name__, static_url_path='/static')
+
+# Pull the session secret key from the session key file
+with open('session_secret', encoding="utf-8") as f:
+    app.secret_key = f.read()
 
 def jsonp(func):
     """Wraps JSONified output for JSONP requests."""
@@ -26,31 +29,40 @@ def jsonp(func):
 @app.route("/api/evaluate/", methods=['POST'])
 @jsonp
 def handle_evaluate():
-    data = request.json or request.form
-    if data is None:
-        return json_error_response("yaml and yaql_expression are missing in request body")
-    if not "yaql_expression" in data:
-        return json_error_response("yaql_expression is missing")
-    if not "yaml" in data:
-        return json_error_response("yaml is missing")
-
-    if data['st2_host'] and data['st2_key'] and data['st2_execution']:
-        from st2client.client import Client
-        import json
+    if request.method == 'POST':
         try:
-            client = Client(api_url=data['st2_host'] + '/api/v1', api_key=data['st2_key'])
-            execution = client.liveactions.get_by_id(data['st2_execution'])
-            payload = execution.result
+            app.logger.info("Incoming Request")
+            app.logger.debug(request.json)
+            data = request.json
+
+            app.logger.info("Setting session values")
+            session['expression'] = data['yaql_expression']
+            session['json_yaml'] = data['yaml']
+
+        except KeyError as e:
+            return json_error_response(str(e))
         except Exception as e:
             return json_error_response(str(e))
-    else:
-        payload = data['yaml']
+        
+        if data is None:
+            return json_error_response("yaml and yaql_expression are missing in request body")
+        if not "yaql_expression" in data:
+            return json_error_response("yaql_expression is missing")
+        if not "yaml" in data:
+            return json_error_response("yaml is missing")
+        
+        yaml = data['yaml']
+        yaql = data['yaql_expression']
+        app.logger.debug(f"yaml payload: {yaml}")
+        app.logger.debug(f"yaql payload: {yaql}")
 
-    return invoke(yaqluator.evaluate, {"expression": data["yaql_expression"],
-                                       "data": payload
-                                       }
-                  )
-
+        r = invoke(yaqluator.evaluate, {"expression": yaql,
+                                        "data": yaml
+                                        }
+                    )
+        # app.logger.debug(f"Returning: {r.json}")
+        app.logger.debug(f"Returning: {r}")
+        return r
 
 @app.route("/api/autoComplete/", methods=['POST'])
 @jsonp
@@ -65,31 +77,19 @@ def handle_auto_complete():
     legacy = str(data.get("legacy", False)).lower() == "true"
     return invoke(yaqluator.auto_complete, {"yaql_expression": data["yaql_expression"], "yaml_string": data["yaml"], "legacy":legacy})
 
-
-@app.route("/examples/", methods=["GET"])
-@jsonp
-def list_examples():
-    return invoke(files.list_examples, value_key="examples")
-
-
-@app.route("/api/examples/<example_name>", methods=["GET"])
-@jsonp
-def get_example(example_name):
-    # if "exampleName" not in request.args:
-    #     return json_error_response("example name is missing")
-    return invoke(files.get_example, {"example_name": example_name})
-
-
 def invoke(function, params=None, value_key="value"):
     try:
         params = params or {}
         response = function(**params)
         ret = {"statusCode": 1, value_key: response}
     except Exception as e:
-        #print format_exception(e)
         ret = error_response(str(e))
 
-    return jsonify(**ret)
+    try:
+        # return jsonify(**ret)
+        return ret
+    except Exception as e:
+        return json_error_response(format_exception(e))
 
 def json_error_response(message):
     return jsonify({"statusCode": -1, "error": message})
@@ -112,7 +112,9 @@ def format_exception(e):
 
 @app.route('/')
 def doit(name=None):
-    return render_template('index.html', name=name)
+    expression = session.get('expression', '')
+    json_yaml = session.get('json_yaml', '')
+    return render_template('index.html', name=name, expression=expression, json_yaml=json_yaml)
 
 
 if __name__ == '__main__':
